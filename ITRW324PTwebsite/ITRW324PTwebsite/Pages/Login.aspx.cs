@@ -4,11 +4,17 @@ using System.Linq;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using MySql.Data.MySqlClient;
+using System.Configuration;
+using System.Security.Cryptography;
+using System.IO;
+using System.Text;
 
 namespace ITRW324PTwebsite.Pages
 {
     public partial class Login : System.Web.UI.Page
     {
+        string constr = ConfigurationManager.ConnectionStrings["constr"].ConnectionString;
         protected void Page_Load(object sender, EventArgs e)
         {
 
@@ -29,6 +35,38 @@ namespace ITRW324PTwebsite.Pages
                     }
                 }
             }
+        }
+
+        protected void Button1_Click(object sender, EventArgs e)
+        {
+            byte[] bytes = Encoding.UTF8.GetBytes(TextBox1.Text);
+            SHA256Managed alg = new SHA256Managed();
+            string pwd = BitConverter.ToString(alg.ComputeHash(bytes));
+            
+            MySqlConnection conn = new MySqlConnection(constr);
+            MySqlCommand cmd = new MySqlCommand("Select * from Users where Email=@email and Password=@pwd", conn);
+
+            cmd.Parameters.AddWithValue("@email", TextBox5.Text);
+            cmd.Parameters.AddWithValue("@pwd", pwd);
+            conn.Open();
+            MySqlDataReader rd = cmd.ExecuteReader();
+
+            if (rd.Read())
+            {
+                Session["ID"] = rd["UserID"];
+                Session["email"] = rd["Email"];
+                Session["Name"] = rd["Name"] + " "+ rd["Surname"];
+                rd.Close();
+                cmd.Dispose();
+                conn.Close();
+                Response.Redirect("Home.aspx");
+            }
+            else
+            {
+                Label1.Text = "Email or Password is incorrect";
+                conn.Close();
+            }
+
         }
     }
 }
