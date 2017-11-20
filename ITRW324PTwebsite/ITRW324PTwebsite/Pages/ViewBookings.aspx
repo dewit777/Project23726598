@@ -122,7 +122,9 @@
         <br />
         <div>
             <asp:Button ID="btn_confirmPayment" runat="server" Text="Confirm Payment" OnClick="btn_confirmPayment_Click" />
-            <asp:Button ID="Button1" runat="server" OnClick="Button1_Click1" Text="Button" />
+            <br />
+            <br />
+           
         </div>
     </form>
 </body>

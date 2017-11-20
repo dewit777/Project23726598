@@ -41,5 +41,15 @@ namespace ITRW324PTwebsite.Pages
         {
 
         }
+
+        protected void Button1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        protected void LinkButton1_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

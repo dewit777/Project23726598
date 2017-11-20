@@ -165,8 +165,12 @@
       <DependentUpon>Web.config</DependentUpon>
     </None>
     <Content Include="Pages\BookingConfirmation.aspx" />
+    <Content Include="Pages\ContactUs.aspx" />
     <Content Include="Pages\UserManagement.aspx" />
+    <Content Include="Pages\ViewCalendar.aspx" />
     <Content Include="Web.sitemap" />
+    <Content Include="Web1.sitemapUser" />
+    <Content Include="Web1.sitemapAdmin" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Pages\CreateNewUser.aspx" />
@@ -185,6 +189,13 @@
     </Compile>
     <Compile Include="Pages\BookingConfirmation.aspx.designer.cs">
       <DependentUpon>BookingConfirmation.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\ContactUs.aspx.cs">
+      <DependentUpon>ContactUs.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\ContactUs.aspx.designer.cs">
+      <DependentUpon>ContactUs.aspx</DependentUpon>
     </Compile>
     <Compile Include="Pages\CreateNewUser.aspx.cs">
       <DependentUpon>CreateNewUser.aspx</DependentUpon>
@@ -227,6 +238,13 @@
     </Compile>
     <Compile Include="Pages\ViewBookings.aspx.designer.cs">
       <DependentUpon>ViewBookings.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\ViewCalendar.aspx.cs">
+      <DependentUpon>ViewCalendar.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\ViewCalendar.aspx.designer.cs">
+      <DependentUpon>ViewCalendar.aspx</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

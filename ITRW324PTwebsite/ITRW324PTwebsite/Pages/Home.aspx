@@ -5,6 +5,14 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
     <title></title>
+    <script type="text/javascript">
+    function OpenPopup() {
+
+       window.open("ContactUs.aspx", "List", "toolbar=no, location=no,status=yes,menubar=no,scrollbars=yes,resizable=no, width=900,height=500,left=430,top=100");
+        return false;
+    }
+</script>
+
         <style type="text/css">
     body
     {
@@ -47,6 +55,7 @@
 <body>
     <form id="form1" runat="server">
     <div>
+
      <asp:SiteMapDataSource ID="SiteMapDataSource1" runat="server" ShowStartingNode="false" />
 <asp:Menu ID="Menu" runat="server" DataSourceID="SiteMapDataSource1" Orientation="Horizontal"
     OnMenuItemDataBound="OnMenuItemDataBound" >
@@ -57,6 +66,11 @@
     </LevelMenuItemStyles>
    
 </asp:Menu>
+    
+        
+        <asp:LinkButton ID="LinkButton1" runat="server" Text="Contact Us" OnClientClick="OpenPopup();" OnClick="LinkButton1_Click"></asp:LinkButton>
+        
+        <br />
     
     </div>
     </form>

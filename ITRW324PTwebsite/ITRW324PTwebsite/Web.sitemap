@@ -4,18 +4,20 @@
   <siteMapNode url="" title="Home" description="">
     <siteMapNode url="Pages/Home.aspx" title="Home" description="Home Page" />
     <siteMapNode url="Pages/MakeNewBooking.aspx" title="Make Booking" description="Bookings" />
+    <siteMapNode url ="javascript:2;" title="Admin" description="Admin">
+      <siteMapNode url="Pages/ViewBookings.aspx" title="Bookings" description="Bookings" />
+      <siteMapNode url="Pages/UserManagement.aspx" title="Users" description="Users" />
+      <siteMapNode url="Pages/ViewCalendar.aspx" title="Calendar" description="Calendar" />
+
+    </siteMapNode>
     <siteMapNode url="javascript:;" title="My Account" description="Account Page">
       <siteMapNode url ="Pages/Login.aspx" title="Login" description="Login Page"/>
       <siteMapNode url ="Pages/CreateNewUser.aspx" title="Create New User" description="User Create Page"/>
     </siteMapNode>
-      <siteMapNode url ="javascript:2;" title="Admin" description="Admin">
-        <siteMapNode url="Pages/ViewBookings.aspx" title="Bookings" description="Bookings" />
-        <siteMapNode url="Pages/UserManagement.aspx" title="Users" description="Users" />
-
+    
       
       </siteMapNode>
     
-    </siteMapNode>
  
   
 </siteMap>
