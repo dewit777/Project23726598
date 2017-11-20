@@ -7,6 +7,9 @@ using System.Web.UI.WebControls;
 using MySql.Data.MySqlClient;
 using System.Data;
 using System.Configuration;
+using System.Net.Mail;
+using System.Text;
+
 
 
 
@@ -14,19 +17,13 @@ namespace ITRW324PTwebsite.Pages
 {
     public partial class MakeNewBooking : System.Web.UI.Page
     {
-        public int  userid;
+        MySqlConnection con = new MySqlConnection(ConfigurationManager.ConnectionStrings["constr"].ConnectionString);
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (Session["ID"] == null)
-                // Response.Redirect("Login.aspx");
-                Label1.Text = "please login";
-            else
-            {
-                userid = Convert.ToInt32(Session["ID"]);
-                string username = Session["Name"].ToString();
+           
                
 
-            }
+            
         }
         protected void OnMenuItemDataBound(object sender, MenuEventArgs e)
         {
@@ -48,12 +45,36 @@ namespace ITRW324PTwebsite.Pages
 
         protected void Calendar1_SelectionChanged(object sender, EventArgs e)
         {
-            string date = Calendar1.SelectedDate.ToLongDateString();
-            TextBox1.Text = Calendar1.SelectedDate.ToLongDateString();
+
+            string date = Calendar1.SelectedDate.ToShortDateString();
+            TextBox1.Text = date;
             Label3.Text = "Date: " + TextBox1.Text + " Time: " + DropDownList1.SelectedValue.ToString();
+            checkavailabletimeslots(date);
+
+           
+        }
+        protected void Calendar1_DayRender(object sender, DayRenderEventArgs e)
+        {
+            if (e.Day.Date.DayOfWeek == DayOfWeek.Saturday || e.Day.Date.DayOfWeek == DayOfWeek.Sunday)
+            {
+                e.Cell.Enabled = false;
+                e.Day.IsSelectable = false;
+                e.Cell.BackColor = System.Drawing.Color.Aqua;
+
+            }
+            else
+                e.Day.IsSelectable = true;
+
+            if (e.Day.Date < DateTime.Today)
+            {
+                e.Cell.Enabled = false;
+                e.Day.IsSelectable = false;
+                e.Cell.ForeColor = System.Drawing.Color.Gray;
+            }
+            else
+                e.Day.IsSelectable = true;
 
         }
-
         protected void Button1_Click(object sender, EventArgs e)
         {
 
@@ -84,38 +105,132 @@ namespace ITRW324PTwebsite.Pages
 
         protected void Button1_Click1(object sender, EventArgs e)
         {
+            if (Page.IsValid)
+            {
+                string name = Session["Name"].ToString();
+                int id = Convert.ToInt32(Session["ID"]);
+                string date = Calendar1.SelectedDate.ToShortDateString();
+                string time = DropDownList1.SelectedValue.ToString();
+                string pay = "No";
+                string email = Session["email"].ToString();
+                string refe = ""; 
 
+                DateTime dt = Convert.ToDateTime(date);
+                 
+
+                try
+                {
+                    Book(id, name, dt, time, pay);
+
+                }
+                catch
+                {
+
+                }
+                finally
+                {
+
+                    using (MySqlCommand cmd = new MySqlCommand("Select Reference from Bookings where UserID=@user order by BookingID DESC LIMIT 1", con))
+                    {
+                        cmd.Parameters.AddWithValue("@user", id);
+                        con.Open();
+                        MySqlDataReader rd = cmd.ExecuteReader();
+                        while (rd.Read())
+                        {
+                            refe = rd["Reference"].ToString();
+                        }
+                    }
+                        StringBuilder sb = new StringBuilder();
+                    sb.AppendLine("Good day " + name);
+                    sb.AppendLine("");
+                    sb.AppendLine("You've made a booking for " + date + " at " + time);
+                    sb.AppendLine("If this is a mistake please contact us at Ivan23726598@gmail.com");
+                    sb.AppendLine("Please make the payment to the following account to confirm the booking");
+                    sb.AppendLine("");
+                    sb.AppendLine("Banking Details:");
+                    sb.AppendLine("Bank: Union Bank");
+                    sb.AppendLine("account number: 65327522");
+                    sb.AppendLine("Branch number: 422572");
+                    sb.AppendLine("Reference number: " + refe);
+                    string body = sb.ToString();
+                    Sendemail(email, date, body);
+                }
+            }
+          
+           
         }
-        public void checkavailabletimeslots()
+        public void checkavailabletimeslots(string date)
         {
+            DropDownList1.Items.Clear();
+            DataTable dt = new DataTable();
+            dt.Clear();
 
 
+            string[] AllTimeslots = { "06:00", "08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00" };
+            string[] NotAvailabletimeslots;
+            string[] Availabletimeslots;
 
+            
+
+
+            dt.Columns.Add("Time");
+
+           
+            using (MySqlCommand cmd = new MySqlCommand("Select Date,Timeslot from Bookings where Date=@date", con))
+            {
+                cmd.Parameters.AddWithValue("@date", date);
+                con.Open();
+                MySqlDataReader rd = cmd.ExecuteReader();
+                while (rd.Read())
+                {
+                    DataRow row = dt.NewRow();
+                    row["Time"] = rd["Timeslot"];
+
+                    dt.Rows.Add(row);
+
+                }
+
+            }
+
+            var query = from row in dt.AsEnumerable()
+                        select row["Time"].ToString();
+            NotAvailabletimeslots = query.ToArray();
+
+            Availabletimeslots = AllTimeslots.Except(NotAvailabletimeslots).ToArray();
+
+          
+
+            foreach (object time in Availabletimeslots)
+            {
+                DropDownList1.Items.Add(new ListItem(time.ToString(), time.ToString()));
+            }
+            Array.Clear(Availabletimeslots, 0, Availabletimeslots.Length);
+            Array.Clear(NotAvailabletimeslots, 0, NotAvailabletimeslots.Length);
         }
-
-        public void Book()
+        public void Book(int id,string name,DateTime date,string time,string pay)
         {
             string constr = ConfigurationManager.ConnectionStrings["constr"].ConnectionString;
             try
             {
                 MySqlConnection conn = new MySqlConnection(constr);
-
-             
-
-
-
-                string insert = "Insert into Bookings () values ()";
+                 
+                string insert = "Insert into Bookings (UserID,Name_and_Surname,Date,Timeslot,Confirmed,Reference) values (@user,@name,@date,@time,@confrim,@reference)";
                 using (MySqlCommand cmd = new MySqlCommand(insert, conn))
                 {
-                    cmd.Connection = conn;
 
+                    string reference = date.ToString("ddMMyyyy") + id.ToString() + createRandomSequence();
+                     
+                    cmd.Connection = conn;
+                    cmd.Parameters.AddWithValue("@user",id);
+                    cmd.Parameters.AddWithValue("@name",name);
+                    cmd.Parameters.AddWithValue("@date", date);
+                    cmd.Parameters.AddWithValue("@time", time);
+                    cmd.Parameters.AddWithValue("@confrim", pay);
+                    cmd.Parameters.AddWithValue("@reference", reference);
 
                     using (MySqlDataAdapter adpt = new MySqlDataAdapter())
                     {
-                        adpt.SelectCommand = cmd;
-                     
-                       
-
+                        adpt.SelectCommand = cmd; 
 
                         conn.Open();
                         int result = cmd.ExecuteNonQuery();
@@ -129,6 +244,26 @@ namespace ITRW324PTwebsite.Pages
             {
                 Label1.Text = "Not Entered " + ex;
             }
+        }
+
+       public void Sendemail(string email,string date,string body)
+        {
+
+            MailMessage mm = new MailMessage("Ivan23726598@gmail.com",email);
+            mm.Subject = "Booking for " + date;
+            mm.Body = body;
+            SmtpClient smtp = new SmtpClient();
+            smtp.Send(mm);
+        }
+
+        public string createRandomSequence()
+        {
+            var randomNumber = new Random();
+            string seq = "";
+            for (int i = 0; i < 10; i++)
+                seq += randomNumber.Next(0,9).ToString();
+
+            return seq;
         }
     }
 }
