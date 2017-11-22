@@ -9,9 +9,11 @@ namespace ITRW324PTwebsite.Pages
 {
     public partial class Home : System.Web.UI.Page
     {
+        string usertype;
         protected void Page_Load(object sender, EventArgs e)
         {
-
+            if (Session["ID"] != null)
+                usertype = Session["Type"].ToString();
         }
 
         protected void OnMenuItemDataBound(object sender, MenuEventArgs e)
@@ -29,6 +31,18 @@ namespace ITRW324PTwebsite.Pages
                         e.Item.Selected = true;
                     }
                 }
+            }
+            if (usertype != "Admin")
+            {
+                System.Web.UI.WebControls.Menu menu = (System.Web.UI.WebControls.Menu)sender;
+                SiteMapNode mapNode = (SiteMapNode)e.Item.DataItem;
+
+                if (mapNode.Title == "Admin")
+                {
+                    System.Web.UI.WebControls.MenuItem itemToRemove = menu.FindItem(mapNode.Title);
+                    menu.Items.Remove(itemToRemove);
+                }
+
             }
         }
 

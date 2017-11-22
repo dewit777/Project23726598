@@ -62,6 +62,7 @@
             <br />
             <div id="date1" style="position: relative; left: 50px; margin-top: 50px;">
                 <asp:DropDownList ID="DropDownList1" runat="server">
+                    <asp:ListItem>All</asp:ListItem>
                     <asp:ListItem>Before</asp:ListItem>
                     <asp:ListItem>After</asp:ListItem>
                 </asp:DropDownList>
@@ -84,6 +85,7 @@
         <asp:Label ID="Label6" runat="server" Text="Paid"></asp:Label>
         <br />
         <asp:DropDownList ID="dd_paid" runat="server">
+            <asp:ListItem>All</asp:ListItem>
             <asp:ListItem>Yes</asp:ListItem>
             <asp:ListItem>No</asp:ListItem>
         </asp:DropDownList>

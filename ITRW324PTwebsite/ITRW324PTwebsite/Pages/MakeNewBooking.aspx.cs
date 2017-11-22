@@ -17,13 +17,15 @@ namespace ITRW324PTwebsite.Pages
 {
     public partial class MakeNewBooking : System.Web.UI.Page
     {
+        string usertype;
         MySqlConnection con = new MySqlConnection(ConfigurationManager.ConnectionStrings["constr"].ConnectionString);
         protected void Page_Load(object sender, EventArgs e)
         {
-           
-               
+            if (Session["ID"] != null)
+                usertype = Session["Type"].ToString();
 
-            
+
+
         }
         protected void OnMenuItemDataBound(object sender, MenuEventArgs e)
         {
@@ -40,6 +42,18 @@ namespace ITRW324PTwebsite.Pages
                         e.Item.Selected = true;
                     }
                 }
+            }
+            if (usertype != "Admin")
+            {
+                System.Web.UI.WebControls.Menu menu = (System.Web.UI.WebControls.Menu)sender;
+                SiteMapNode mapNode = (SiteMapNode)e.Item.DataItem;
+
+                if (mapNode.Title == "Admin")
+                {
+                    System.Web.UI.WebControls.MenuItem itemToRemove = menu.FindItem(mapNode.Title);
+                    menu.Items.Remove(itemToRemove);
+                }
+
             }
         }
 
@@ -154,6 +168,10 @@ namespace ITRW324PTwebsite.Pages
                     sb.AppendLine("Reference number: " + refe);
                     string body = sb.ToString();
                     Sendemail(email, date, body);
+                    ScriptManager.RegisterStartupScript(this.Page, this.Page.GetType(),
+"confirm_msg",
+"alert('Booking has been Made.');",
+true);
                 }
             }
           
@@ -260,7 +278,7 @@ namespace ITRW324PTwebsite.Pages
         {
             var randomNumber = new Random();
             string seq = "";
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 5; i++)
                 seq += randomNumber.Next(0,9).ToString();
 
             return seq;
