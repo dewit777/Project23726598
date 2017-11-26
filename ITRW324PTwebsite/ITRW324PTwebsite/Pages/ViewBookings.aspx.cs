@@ -23,15 +23,17 @@ using iTextSharp.text.pdf;
 using iTextSharp.text.html.simpleparser;
 
 
+
 namespace ITRW324PTwebsite.Pages
 {
     public partial class ViewBookings : System.Web.UI.Page
     {
                                              
         private static string gFolder = System.Web.HttpContext.Current.Server.MapPath("");
-      
+        int count;
         string userEmail = "";
         string usertype;
+        bool spaid;
         ServiceReference1.Service1Client webservice = new ServiceReference1.Service1Client();
 
         MySqlConnection con = new MySqlConnection(ConfigurationManager.ConnectionStrings["constr"].ConnectionString);
@@ -47,6 +49,10 @@ namespace ITRW324PTwebsite.Pages
                
             }
 
+            for (int i = 2014; i <= 2099; i++)
+            {
+                DropDownList2.Items.Add(i.ToString());
+            }
         }
 
         protected void OnMenuItemDataBound(object sender, MenuEventArgs e)
@@ -137,7 +143,7 @@ namespace ITRW324PTwebsite.Pages
                     row["BookingID"] = item.BookingID;
                     row["UserID"] = item.UserID;
                     row["Name_and_Surname"] = item.Name;
-                    row["Date"] = item.Date;
+                    row["Date"] = item.Date.ToString("yyyy/MM/dd");
                     row["Timeslot"] = item.Timeslot;
                     row["Confirmed"] = item.Confirm;
                     row["Reference"] = item.Reference;
@@ -147,10 +153,12 @@ namespace ITRW324PTwebsite.Pages
                 GridView1.DataBind();
                 if (GridView1.Rows.Count > 0)
                 {
+                    Button2.Visible = true;
                     btn_confirmPayment.Visible = true;
                 }
                 else
                 {
+                    Button2.Visible = false;
                     btn_confirmPayment.Visible = false;
                 }
             }
@@ -158,39 +166,7 @@ namespace ITRW324PTwebsite.Pages
             {
                 Label1.Text = e.ToString();
             }
-            /*(   string constr = ConfigurationManager.ConnectionStrings["constr"].ConnectionString;
-               MySqlConnection conn = new MySqlConnection(constr);
 
-               using (MySqlCommand cmd = new MySqlCommand(query, conn))
-               {
-                   cmd.Connection = conn;
-
-                   using (MySqlDataAdapter adpt = new MySqlDataAdapter())
-                   {
-                       adpt.SelectCommand = cmd;
-
-                       conn.Open();
-                       MySqlDataReader rd = cmd.ExecuteReader();
-
-                       GridView1.DataSource = rd;
-                       GridView1.DataBind();
-                       GridView1.Visible = true;
-
-                       if (GridView1.Rows.Count > 0)
-                       {
-                           btn_confirmPayment.Visible = true;
-                       }
-                       else
-                       {
-                           btn_confirmPayment.Visible = false;
-                       }
-
-                       //conn.Open();
-                       //int result = cmd.ExecuteNonQuery();
-                       conn.Close();
-
-                   }
-               }*/
         }
 
         protected void Calendar2_SelectionChanged(object sender, EventArgs e)
@@ -228,49 +204,69 @@ namespace ITRW324PTwebsite.Pages
             Session["gridview1SelectedBookingUserName"] = row.Cells[3].Text;
             Session["gridview1SelectedRowDate"] = row.Cells[4].Text;
             Session["gridview1SelectedRowTimeslot"] = row.Cells[5].Text;
-            //MessageLabel.Text = "You selected " + row.Cells[2].Text + ".";
+            Session["gridview1SelectedRowConfirm"] = row.Cells[6].Text;
+
+            btn_confirmPayment.Enabled = true;
+
+
+
         }
 
         protected void btn_confirmPayment_Click(object sender, EventArgs e)
         {
             int bookingId = Convert.ToInt32(Session["gridview1SelectedBookingIdRow"]);
-            
-            if (bookingId != 0)
+            int confirm = Convert.ToInt32(Session["gridview1SelectedRowConfirm"]);
+
+
+            if (confirm == 1)
+                spaid = true;
+            else
+                spaid = false;
+            if (spaid==true)
             {
-                string query = "Update ITRW324.Bookings set Confirmed = 1  where BookingID = " + bookingId;
-
-                string constr = ConfigurationManager.ConnectionStrings["constr"].ConnectionString;
-                MySqlConnection conn = new MySqlConnection(constr);
-
-                using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                ScriptManager.RegisterStartupScript(this.Page, this.Page.GetType(),
+"confirm_msg",
+"alert('Selected booking has already been confirmed!');",
+true);
+            }
+            else
+            {
+                if (bookingId != 0)
                 {
-                    cmd.Connection = conn;
+                    string query = "Update ITRW324.Bookings set Confirmed = 1  where BookingID = " + bookingId;
 
-                    using (MySqlDataAdapter adpt = new MySqlDataAdapter())
+                    string constr = ConfigurationManager.ConnectionStrings["constr"].ConnectionString;
+                    MySqlConnection conn = new MySqlConnection(constr);
+
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
-                        adpt.SelectCommand = cmd;
+                        cmd.Connection = conn;
 
-                        conn.Open();
-                        cmd.ExecuteNonQuery();
-                        conn.Close();
+                        using (MySqlDataAdapter adpt = new MySqlDataAdapter())
+                        {
+                            adpt.SelectCommand = cmd;
 
-                        sendConfirmationEmail(bookingId);
+                            conn.Open();
+                            cmd.ExecuteNonQuery();
+                            conn.Close();
 
-                        string timeslot = Session["gridview1SelectedRowTimeslot"].ToString();
-                        int hour = Convert.ToInt32(timeslot.Substring(0, 2));
-                        
-                       DateTime date= Convert.ToDateTime(Session["gridview1SelectedRowDate"]);
-                        int year = date.Year;
-                        int month = date.Month;
-                        int day = date.Day;
-                       
+                            sendConfirmationEmail(bookingId);
 
-                        createGoogleCalenderevent(year,month,day,hour, userEmail);
-                        Display();
+                            string timeslot = Session["gridview1SelectedRowTimeslot"].ToString();
+                            int hour = Convert.ToInt32(timeslot.Substring(0, 2));
+
+                            DateTime date = Convert.ToDateTime(Session["gridview1SelectedRowDate"]);
+                            int year = date.Year;
+                            int month = date.Month;
+                            int day = date.Day;
+
+
+                           createGoogleCalenderevent(year, month, day, hour, userEmail);
+                            Display();
+                        }
+
                     }
-
                 }
-
               
             }
         }
@@ -299,14 +295,15 @@ namespace ITRW324PTwebsite.Pages
 
             sb1.AppendLine("Kind regards");
             string body = sb1.ToString();
-
+            DateTime date = Convert.ToDateTime(Session["gridview1SelectedRowDate"]);
+            string sdate = date.ToString("yyyy/MM/dd");
             //Create PDF
             DataTable dt2 = new DataTable();
             dt2.Columns.AddRange(new DataColumn[3] {
                                 new DataColumn("Client Name"),
-                                new DataColumn("Date"),
+                                new DataColumn("Booking Date"),
                                 new DataColumn("Price")});
-            dt2.Rows.Add(name, Convert.ToDateTime(Session["gridview1SelectedRowDate"]), "R200");
+            dt2.Rows.Add(name, sdate+" " + Session["gridview1SelectedRowTimeslot"], "R200");
 
             using (StringWriter sw = new StringWriter())
             {
@@ -362,10 +359,12 @@ namespace ITRW324PTwebsite.Pages
                         byte[] bytes = memoryStream.ToArray();
                         memoryStream.Close();
 
-                        
+
                         //Send Complied 
                       
-                        Sendemail(Session["gridview1SelectedRowDate"].ToString(), body,Convert.ToInt32(Session["gridview1SelectedUserIdRow"]), bytes);
+
+
+                        Sendemail(sdate, body,Convert.ToInt32(Session["gridview1SelectedUserIdRow"]), bytes);
 
                     }
                 }
@@ -386,57 +385,18 @@ namespace ITRW324PTwebsite.Pages
  true);
             }
 
-            /*  string userFirstName = name.Substring(0, name.IndexOf(" "));
-              string userSurname = name.Substring(name.IndexOf(" ") + 1, name.Length - name.IndexOf(" ") - 1);
-
-              string query = "Select Email from ITRW324.Users  where Name = '" + userFirstName + "' and Surname = '" + userSurname + "'";
-
-              using (MySqlCommand cmd = new MySqlCommand(query, con))
-              {
-                  cmd.Connection = con;
-
-                  using (MySqlDataAdapter adpt = new MySqlDataAdapter())
-                  {
-                      adpt.SelectCommand = cmd;
-
-                      con.Open();
-                      MySqlDataReader rd = cmd.ExecuteReader();
-
-                      while (rd.Read())
-                      {
-                          userEmail = rd["Email"].ToString();
-                      }
-
-                      //conn.Open();
-                      //int result = cmd.ExecuteNonQuery();
-                      con.Close();
-
-                      MailMessage mm = new MailMessage("Ivan23726598@gmail.com", userEmail);
-                      mm.Subject = "Booking CONFIRMED for " + date;
-                      mm.Body = body;
-                      SmtpClient smtp = new SmtpClient();
-                      smtp.Send(mm);
-
-        
-                    ScriptManager.RegisterStartupScript(this.Page, this.Page.GetType(),
-          "confirm_msg",
-          "alert('Confirmation has been sent!');",
-          true);
-                }
-            }
-            */
 
 
         }
-
-        public void createGoogleCalenderevent(int year, int month, int day, int hour,string email)
+        public void createGoogleCalenderevent(int year, int month, int day, int hour, string email)
         {
-
+            
             UserCredential credential = GoogleWebAuthorizationBroker.AuthorizeAsync(
                 new ClientSecrets
                 {
-                    ClientId = "793074437757-u3r9hvoer0jtj6pcn1gi9qvpq08mmktg.apps.googleusercontent.com",
-                    ClientSecret = "JhgmdCZ2lBD5RKexk2GjVFao",
+                    ClientId = "793074437757-pnubdra9rtj3d85454f9v9lcrqogab1p.apps.googleusercontent.com",
+                    ClientSecret = "HQhcke75XiEfhlpboY1lIEjv",
+                    
                 },
                 new[] { CalendarService.Scope.Calendar },
                 "ivan23726598@gmail.com",
@@ -448,26 +408,26 @@ namespace ITRW324PTwebsite.Pages
                 ApplicationName = "Calendar API Sample",
             });
 
-           
+
             Event myEvent = new Event
             {
                 Summary = "Training Session",
                 Location = "Gym",
-               
+
                 Start = new EventDateTime()
                 {
                     DateTime = new DateTime(year, month, day, hour, 0, 0),
-                   TimeZone = "America/Los_Angeles"
+                    TimeZone = "America/Los_Angeles"
                 },
                 End = new EventDateTime()
                 {
-                    DateTime = new DateTime(year, month, day, hour+2, 0, 0),
+                    DateTime = new DateTime(year, month, day, hour + 2, 0, 0),
                     TimeZone = "America/Los_Angeles"
                 },
-                
+
                 Attendees = new List<EventAttendee>()
       {
-        new EventAttendee() { Email = "ivan23726598@gmail.com" },
+        new EventAttendee() { Email = "ivan23726598@gmail.com" ,Organizer=true},
          new EventAttendee() { Email = email }
       }
             };
@@ -487,12 +447,134 @@ namespace ITRW324PTwebsite.Pages
 
         }
 
+        protected void Button1_Click2(object sender, EventArgs e)
+        {
+
+            string query = "Select BookingID,UserID,Name_and_Surname,Date,Timeslot,Confirmed,Reference from ITRW324.Bookings where Month(Date)='" + DropDownList3.SelectedValue + "' AND YEAR(DATE)='" + DropDownList2.SelectedValue + "' AND Confirmed ='"+1+"'Order by Date";
+            List<ServiceReference1.BookingDatas> bookings = webservice.GetBookings(query);
+           
+
+            DataSet ds = new DataSet();
+            System.Data.DataTable dt = new System.Data.DataTable();
+            dt.Columns.Add("BookingID");
+            dt.Columns.Add("UserID");
+            dt.Columns.Add("Name_and_Surname");
+            dt.Columns.Add("Date");
+            dt.Columns.Add("Timeslot");
+            dt.Columns.Add("Confirmed");
+           // dt.Columns.Add("Reference");
+
+            foreach (var item in bookings)
+            {
+
+                DataRow row = dt.NewRow();
+                row["BookingID"] = item.BookingID;
+                row["UserID"] = item.UserID;
+                row["Name_and_Surname"] = item.Name;
+                row["Date"] = item.Date.ToString("yyyy/MM/dd");
+                row["Timeslot"] = item.Timeslot;
+                row["Confirmed"] = item.Confirm;
+              //  row["Reference"] = item.Reference;
+                dt.Rows.Add(row);
+                count++;
+            }
+            GridView1.DataSource = dt;
+            GridView1.DataBind();
+
+            string filename = "Revenue Sheet for"+DropDownList2.SelectedValue+"-"+DropDownList3.SelectedValue;
+
+            Microsoft.Office.Interop.Excel.Application app = new Microsoft.Office.Interop.Excel.Application();
+            try
+            {
+                Microsoft.Office.Interop.Excel.Workbook wb = app.Workbooks.Add(1);
+                Microsoft.Office.Interop.Excel.Worksheet ws = (Microsoft.Office.Interop.Excel.Worksheet)wb.Worksheets[1];
+
+                // export column headers
+                int colNdx;
+                for (colNdx = 0; colNdx < dt.Columns.Count; colNdx++)
+                {
+                    ws.Cells[1, colNdx + 1] = dt.Columns[colNdx].ColumnName;
+                }
+            
+                int rowNdx;
+                // export data
+                for (rowNdx = 0; rowNdx < dt.Rows.Count; rowNdx++)
+                {
+                    for (int rcolNdx = 0; rcolNdx < dt.Columns.Count; rcolNdx++)
+                    {
+                        ws.Cells[rowNdx + 2, rcolNdx + 1] = GetString(dt.Rows[rowNdx][rcolNdx]);
+                    }
+                }
+                int amount = count * 200;
+                ws.Cells[rowNdx+2, colNdx + 1] = amount.ToString();
+                ws.Cells[rowNdx + 2, colNdx] = "Total revenue for the month:";
+                wb.SaveAs(filename, Type.Missing, Type.Missing, Type.Missing,
+                    Type.Missing, Type.Missing, Microsoft.Office.Interop.Excel.XlSaveAsAccessMode.xlNoChange,
+                    Type.Missing, Type.Missing, Type.Missing,
+                    Type.Missing, Type.Missing);
+                wb.Close(false, Type.Missing, Type.Missing);
+            }
+            finally
+            {
+                app.Quit();
+            }
+        }
+        private string GetString(object o)
+        {
+            if (o == null)
+                return "";
+            return o.ToString();
+        }
+
+        protected void Button2_Click(object sender, EventArgs e)
+        {
+            int bookingId = Convert.ToInt32(Session["gridview1SelectedBookingIdRow"]);
+            int confirm = Convert.ToInt32(Session["gridview1SelectedRowConfirm"]);
 
 
+            if (confirm == 1)
+                spaid = true;
+            else
+                spaid = false;
+            if (spaid == true)
+            {
+                ScriptManager.RegisterStartupScript(this.Page, this.Page.GetType(),
+"confirm_msg",
+"alert('Selected booking has already been confirmed and cannot be removed!');",
+true);
+            }
+            else
+            {
+                if (bookingId != 0)
+                {
+                    string query = "Delete from ITRW324.Bookings where BookingID = " + bookingId;
 
+                    string constr = ConfigurationManager.ConnectionStrings["constr"].ConnectionString;
+                    MySqlConnection conn = new MySqlConnection(constr);
 
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Connection = conn;
 
-    
+                        using (MySqlDataAdapter adpt = new MySqlDataAdapter())
+                        {
+                            adpt.SelectCommand = cmd;
 
+                            conn.Open();
+                            cmd.ExecuteNonQuery();
+                            conn.Close();
+                         
+                            Display();
+                            ScriptManager.RegisterStartupScript(this.Page, this.Page.GetType(),
+                   "confirm_msg",
+                   "alert('Booking has been removed!');",
+                   true);
+                        }
+
+                    }
+                }
+
+            }
+        }
     }
     }

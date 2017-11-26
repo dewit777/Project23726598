@@ -16,8 +16,12 @@
         <style type="text/css">
     body
     {
-             background:#ccc;
+              background:#ccc;
     align-content:center;
+      background-image:url('/Images/Logo.png') ;
+   background-repeat:no-repeat;
+   background-position:center;
+   background-position-y:250px;
         font-family: Arial;
         font-size: 10pt;
     }
@@ -57,6 +61,9 @@
     <div>
 
      <asp:SiteMapDataSource ID="SiteMapDataSource1" runat="server" ShowStartingNode="false" />
+&nbsp;
+        <asp:LinkButton ID="LinkButton1" runat="server" Text="Contact Us" OnClientClick="OpenPopup();" OnClick="LinkButton1_Click"></asp:LinkButton>
+        
 <asp:Menu ID="Menu" runat="server" DataSourceID="SiteMapDataSource1" Orientation="Horizontal"
     OnMenuItemDataBound="OnMenuItemDataBound" >
  
@@ -67,11 +74,15 @@
    
 </asp:Menu>
     
+        <asp:Label ID="Label1" runat="server"></asp:Label>
         
-        <asp:LinkButton ID="LinkButton1" runat="server" Text="Contact Us" OnClientClick="OpenPopup();" OnClick="LinkButton1_Click"></asp:LinkButton>
-        
-        <br />
     
+        <br />
+          <%   if (Session["ID"] == null)
+              {  %>
+         <h2>Please Login by clicking the link below</h2>
+        <asp:HyperLink ID="HyperLink1" Text="Login" runat="server" NavigateUrl="~/Pages/Login.aspx"></asp:HyperLink>
+   <%   }  %>
     </div>
     </form>
 </body>

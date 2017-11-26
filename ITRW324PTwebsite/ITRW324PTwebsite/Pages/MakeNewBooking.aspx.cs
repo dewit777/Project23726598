@@ -13,11 +13,14 @@ using System.Text;
 
 
 
+
 namespace ITRW324PTwebsite.Pages
 {
     public partial class MakeNewBooking : System.Web.UI.Page
     {
+        ServiceReference1.Service1Client webservice = new ServiceReference1.Service1Client();
         string usertype;
+        DateTime selecteddate;
         MySqlConnection con = new MySqlConnection(ConfigurationManager.ConnectionStrings["constr"].ConnectionString);
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -60,10 +63,10 @@ namespace ITRW324PTwebsite.Pages
         protected void Calendar1_SelectionChanged(object sender, EventArgs e)
         {
 
-            string date = Calendar1.SelectedDate.ToShortDateString();
-            TextBox1.Text = date;
+            selecteddate = Calendar1.SelectedDate;
+            TextBox1.Text = selecteddate.ToString("yyyy/MM/dd");
             Label3.Text = "Date: " + TextBox1.Text + " Time: " + DropDownList1.SelectedValue.ToString();
-            checkavailabletimeslots(date);
+            checkavailabletimeslots(selecteddate);
 
            
         }
@@ -85,8 +88,6 @@ namespace ITRW324PTwebsite.Pages
                 e.Day.IsSelectable = false;
                 e.Cell.ForeColor = System.Drawing.Color.Gray;
             }
-            else
-                e.Day.IsSelectable = true;
 
         }
         protected void Button1_Click(object sender, EventArgs e)
@@ -119,13 +120,13 @@ namespace ITRW324PTwebsite.Pages
 
         protected void Button1_Click1(object sender, EventArgs e)
         {
-            if (Page.IsValid)
+            if (Page.IsValid && TextBox1.Text!=string.Empty && DropDownList1.Text!=string.Empty)
             {
                 string name = Session["Name"].ToString();
-                int id = Convert.ToInt32(Session["ID"]);
+               string id = (Session["ID"]).ToString();
                 string date = Calendar1.SelectedDate.ToShortDateString();
                 string time = DropDownList1.SelectedValue.ToString();
-                string pay = "No";
+                int pay = 0;
                 string email = Session["email"].ToString();
                 string refe = ""; 
 
@@ -134,12 +135,22 @@ namespace ITRW324PTwebsite.Pages
 
                 try
                 {
-                    Book(id, name, dt, time, pay);
+                    ServiceReference1.BookingDatas Booking = new ServiceReference1.BookingDatas();
 
+                    string reference = dt.ToString("ddMMyyyy") + id.ToString() + createRandomSequence();
+                    Booking.UserID = id;
+                    Booking.Name = name;
+                    Booking.Date = dt;
+                    Booking.Timeslot = time;
+                    Booking.Confirm = pay;
+                    Booking.Reference = reference;
+
+
+                        webservice.InsertBooking(Booking);
                 }
                 catch
                 {
-
+                    Label1.Text = "Failed to create booking";
                 }
                 finally
                 {
@@ -153,6 +164,7 @@ namespace ITRW324PTwebsite.Pages
                         {
                             refe = rd["Reference"].ToString();
                         }
+                        con.Close();
                     }
                         StringBuilder sb = new StringBuilder();
                     sb.AppendLine("Good day " + name);
@@ -170,14 +182,21 @@ namespace ITRW324PTwebsite.Pages
                     Sendemail(email, date, body);
                     ScriptManager.RegisterStartupScript(this.Page, this.Page.GetType(),
 "confirm_msg",
-"alert('Booking has been Made.');",
+"alert('Booking has been made.');",
 true);
+                    checkavailabletimeslots(dt);
                 }
             }
-          
+          else
+            {
+                ScriptManager.RegisterStartupScript(this.Page, this.Page.GetType(),
+"confirm_msg",
+"alert('Please pick a date and timeslot');",
+true);
+            }
            
         }
-        public void checkavailabletimeslots(string date)
+        public void checkavailabletimeslots(DateTime date)
         {
             DropDownList1.Items.Clear();
             DataTable dt = new DataTable();
@@ -225,44 +244,7 @@ true);
             Array.Clear(Availabletimeslots, 0, Availabletimeslots.Length);
             Array.Clear(NotAvailabletimeslots, 0, NotAvailabletimeslots.Length);
         }
-        public void Book(int id,string name,DateTime date,string time,string pay)
-        {
-            string constr = ConfigurationManager.ConnectionStrings["constr"].ConnectionString;
-            try
-            {
-                MySqlConnection conn = new MySqlConnection(constr);
-                 
-                string insert = "Insert into Bookings (UserID,Name_and_Surname,Date,Timeslot,Confirmed,Reference) values (@user,@name,@date,@time,@confrim,@reference)";
-                using (MySqlCommand cmd = new MySqlCommand(insert, conn))
-                {
-
-                    string reference = date.ToString("ddMMyyyy") + id.ToString() + createRandomSequence();
-                     
-                    cmd.Connection = conn;
-                    cmd.Parameters.AddWithValue("@user",id);
-                    cmd.Parameters.AddWithValue("@name",name);
-                    cmd.Parameters.AddWithValue("@date", date);
-                    cmd.Parameters.AddWithValue("@time", time);
-                    cmd.Parameters.AddWithValue("@confrim", pay);
-                    cmd.Parameters.AddWithValue("@reference", reference);
-
-                    using (MySqlDataAdapter adpt = new MySqlDataAdapter())
-                    {
-                        adpt.SelectCommand = cmd; 
-
-                        conn.Open();
-                        int result = cmd.ExecuteNonQuery();
-                        conn.Close();
-
-                    }
-                }
-
-            }
-            catch (Exception ex)
-            {
-                Label1.Text = "Not Entered " + ex;
-            }
-        }
+    
 
        public void Sendemail(string email,string date,string body)
         {

@@ -10,6 +10,11 @@ using System.Configuration;
 using System.Data;
 using System.Net.Mail;
 using System.IO;
+using Google.Apis.Auth.OAuth2;
+using Google.Apis.Calendar.v3;
+using System.Threading;
+using Google.Apis.Calendar.v3.Data;
+using Google.Apis.Services;
 
 namespace Webservice
 {
@@ -24,15 +29,17 @@ namespace Webservice
             string msg = string.Empty;
 
             con.Open();
-            MySqlCommand cmd = new MySqlCommand("insert into Bookings(UserID,Name_and_Surname,Date,Timeslot,Confirmed) values(@userid,@name,@date,@timeslot,@confirm)", con);
+            MySqlCommand cmd = new MySqlCommand("insert into Bookings(UserID,Name_and_Surname,Date,Timeslot,Confirmed,Reference) values(@userid,@name,@date,@timeslot,@confirm,@reference)", con);
             cmd.CommandTimeout = 0;
+
+
             cmd.Parameters.AddWithValue("@userid", data.UserID);
             cmd.Parameters.AddWithValue("@name", data.Name);
-
             cmd.Parameters.AddWithValue("@date", data.Date);
             cmd.Parameters.AddWithValue("@timeslot", data.Timeslot);
-
             cmd.Parameters.AddWithValue("@confirm", data.Confirm);
+            cmd.Parameters.AddWithValue("@reference", data.Reference);
+
             int result = cmd.ExecuteNonQuery();
             if (result == 1)
             {
@@ -73,24 +80,6 @@ namespace Webservice
         }
 
 
-        /*  public Bookingdata GetBookings(string query)
-          {
-
-              using (MySqlCommand cmd = new MySqlCommand(query))
-              {
-                  using (MySqlDataAdapter da = new MySqlDataAdapter())
-                  {
-                      cmd.Connection = con;
-                      da.SelectCommand = cmd;
-                      using (DataTable dt = new DataTable())
-                      {
-                          Bookingdata bookings = new Bookingdata();
-                          da.Fill(bookings.BookingTable);
-                              return bookings;
-                         }
-                  }
-              }
-          }*/
         public List<BookingDatas> GetBookings(string query)
         {
 
@@ -175,7 +164,7 @@ namespace Webservice
                     MailMessage mm = new MailMessage("Ivan23726598@gmail.com", userEmail);
                     mm.Subject = "Booking CONFIRMED for " + date;
                     mm.Body = body;
-                    mm.Attachments.Add(new Attachment(new MemoryStream(pdf), "iTextSharpPDF.pdf"));
+                    mm.Attachments.Add(new Attachment(new MemoryStream(pdf), "Invoice.pdf"));
                     SmtpClient smtp = new SmtpClient();
                     smtp.Send(mm);
                   
@@ -183,6 +172,54 @@ namespace Webservice
 
             }
             return userEmail;
+        }
+
+        public void createGoogleCalenderevent(int year, int month, int day, int hour, string email)
+        {
+
+            UserCredential credential = GoogleWebAuthorizationBroker.AuthorizeAsync(
+                new ClientSecrets
+                {
+                    ClientId = "793074437757-u3r9hvoer0jtj6pcn1gi9qvpq08mmktg.apps.googleusercontent.com",
+                    ClientSecret = "HQhcke75XiEfhlpboY1lIEjv",
+                },
+                new[] { CalendarService.Scope.Calendar },
+                "ivan23726598@gmail.com",
+                CancellationToken.None).Result;
+
+            var service = new CalendarService(new BaseClientService.Initializer()
+            {
+                HttpClientInitializer = credential,
+                ApplicationName = "Calendar API Sample",
+            });
+
+
+            Event myEvent = new Event
+            {
+                Summary = "Training Session",
+                Location = "Gym",
+
+                Start = new EventDateTime()
+                {
+                    DateTime = new DateTime(year, month, day, hour, 0, 0),
+                    TimeZone = "America/Los_Angeles"
+                },
+                End = new EventDateTime()
+                {
+                    DateTime = new DateTime(year, month, day, hour + 2, 0, 0),
+                    TimeZone = "America/Los_Angeles"
+                },
+
+                Attendees = new List<EventAttendee>()
+      {
+        new EventAttendee() { Email = "ivan23726598@gmail.com" ,Organizer=true},
+         new EventAttendee() { Email = email }
+      }
+            };
+
+            Event Event = service.Events.Insert(myEvent, "primary").Execute();
+
+
         }
     }
 }

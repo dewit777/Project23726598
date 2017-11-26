@@ -8,8 +8,12 @@
         <style type="text/css">
     body
     {
-             background:#ccc;
+         background:#ccc;
     align-content:center;
+      background-image:url('/Images/Logo.png') ;
+   background-repeat:no-repeat;
+   background-position:center;
+   background-position-y:250px;
         font-family: Arial;
         font-size: 10pt;
     }

@@ -22,16 +22,15 @@ namespace Webservice
           [OperationContract]
           List<BookingDatas> GetBookings(string query);
 
-      //  [OperationContract]
-      //  Bookingdata GetBookings(string query);
-
-
 
         [OperationContract]
         List<UserData> GetUsers(string query);
 
         [OperationContract]
        string Sendemail(string date, string body,int userid,byte[] pdf);
+
+        [OperationContract]
+        void createGoogleCalenderevent(int year, int month, int day, int hour, string email);
         // TODO: Add your service operations here
     }
 
@@ -53,7 +52,7 @@ namespace Webservice
     [DataContract]
     public class BookingDatas
     {
-        int bookingID = 0;
+        int bookingID;
         string userID = string.Empty;
         string name = string.Empty;
         DateTime date = DateTime.MinValue;

@@ -15,6 +15,15 @@ namespace ITRW324PTwebsite.Pages
     public partial class CreateNewUser : System.Web.UI.Page
     {
         string usertype;
+        string pwd;
+        string Fname;
+        string Sname;
+        string spwd;
+        string email;
+        string cell;
+        string type;
+        ServiceReference1.Service1Client webservice = new ServiceReference1.Service1Client();
+
         protected void Page_Load(object sender, EventArgs e)
         {
             if (Session["ID"]!=null)
@@ -78,51 +87,38 @@ namespace ITRW324PTwebsite.Pages
         {
             if (Page.IsValid)
             {
-                string Fname = TextBox5.Text;
-                string Sname = TextBox1.Text;
-                string spwd = TextBox2.Text;
-                string email = TextBox4.Text;
-                string cell = TextBox6.Text;
-                string type = "Customer";
+                Fname = TextBox5.Text;
+                 Sname = TextBox1.Text;
+                spwd = TextBox2.Text;
+                 email = TextBox4.Text;
+                cell = TextBox6.Text;
+                type = "Customer";
 
                byte[] bytes = Encoding.UTF8.GetBytes(spwd);
                 SHA256Managed alg = new SHA256Managed();
-                string pwd = BitConverter.ToString(alg.ComputeHash(bytes));
-                Label1.Text = pwd;
+                pwd = BitConverter.ToString(alg.ComputeHash(bytes));
+               
 
 
                 if (checkifexist(email) == false)
                 {
                     try
                     {
-                              string constr = ConfigurationManager.ConnectionStrings["constr"].ConnectionString;
-
-                               MySqlConnection conn = new MySqlConnection(constr);
-                               string insert = "Insert into Users (Name,Surname,UserType,Password,Email,CellNumber) values (@Name,@Surname,@UserType,@Pass,@email,@Cellnumber)";
-                               using (MySqlCommand cmd2 = new MySqlCommand(insert, conn))
-                               {
-                                   using (MySqlDataAdapter adpt = new MySqlDataAdapter())
-                                   {
-                                       adpt.SelectCommand = cmd2;
-                                       cmd2.Connection = conn;
-                                cmd2.Parameters.Add("@Name", MySqlDbType.VarChar, 50).Value = Fname;
-                                cmd2.Parameters.Add("@Surname", MySqlDbType.VarChar, 50).Value = Sname;
-                                cmd2.Parameters.Add("@UserType", MySqlDbType.VarChar, 50).Value = type;
-                                cmd2.Parameters.Add("@Pass", MySqlDbType.VarChar, 50).Value = pwd;                   
-                                cmd2.Parameters.Add("@email", MySqlDbType.VarChar, 50).Value = email;
-                                cmd2.Parameters.Add("@Cellnumber", MySqlDbType.VarChar, 50).Value = cell;
-
-                                conn.Open();
-                                       cmd2.ExecuteNonQuery();
-                                       conn.Close();
 
 
-                     } 
+                        ServiceReference1.UserData user = new ServiceReference1.UserData();
 
-                     }
-                         Response.Redirect("Home.aspx");
-                         
+                        user.Name = Fname;
+                        user.Surname = Sname;
+                        user.Usertype = type;
+                        user.Password = pwd;
+                        user.Email = email;
+                        user.Cellnumber = cell;
 
+                        webservice.Createuser(user);
+                        Response.Redirect("Login.aspx");
+
+                        
 
 
                     }

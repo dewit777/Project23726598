@@ -13,7 +13,10 @@ namespace ITRW324PTwebsite.Pages
         protected void Page_Load(object sender, EventArgs e)
         {
             if (Session["ID"] != null)
+            {
                 usertype = Session["Type"].ToString();
+                Label1.Text = "Welcome " + Session["Name"].ToString();
+            }
         }
 
         protected void OnMenuItemDataBound(object sender, MenuEventArgs e)
